@@ -1,10 +1,12 @@
 from pyexpat.errors import messages
+
+from django.contrib.auth.hashers import make_password
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from .forms import CustomerRegistrationForm, VendorRegistrationForm, LoginForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import VendorPackage
+from .models import VendorPackage, CustomUser
 from .forms import VendorPackageForm
 from django.contrib import messages
 
@@ -27,7 +29,7 @@ def vendor_register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)  
-            return redirect('home')
+            return redirect('vendor_dashboard')
     else:
         form = VendorRegistrationForm()
     
@@ -82,12 +84,12 @@ def forgot_password(request):
             return redirect('forgot_password')
 
         try:
-            user = User.objects.get(username=username)
+            user = CustomUser.objects.get(username=username)
             user.password = make_password(new_password)  # Hash the password
             user.save()
             messages.success(request, "Password reset successfully! Please log in with your new password.")
             return redirect('login')
-        except User.DoesNotExist:
+        except CustomUser.DoesNotExist:
             messages.error(request, "User not found.")
             return redirect('forgot_password')
 
@@ -111,19 +113,25 @@ def create_vendor_package(request):
     if request.user.user_type != 'vendor':  # ✅ Ensure only vendors can create packages
         return redirect('home')
 
+    vendor = getattr(request.user, 'vendor', None)  # ✅ Fetch the vendor profile
+    if not vendor:
+        messages.error(request, "Vendor profile not found.")
+        return redirect('vendor_dashboard')
+
     if request.method == 'POST':
         form = VendorPackageForm(request.POST, request.FILES)
 
         if form.is_valid():
             package = form.save(commit=False)
-            package.user = request.user  # ✅ Link package to vendor user directly
+            package.vendor = vendor  # ✅ Assign the Vendor object, NOT the user
             package.save()
             messages.success(request, "Vendor Package Created Successfully!")
             return redirect('vendor_dashboard')
     else:
         form = VendorPackageForm()
-    
-    return render(request, 'users/vendor_package_form.html', {'form': form, 'title': 'Create Package'})
+
+    return render(request, 'users/vendor_package_form.html',
+                  {'form': form, 'title': 'Create Package'})
 
 @login_required
 def update_vendor_package(request, package_id):
@@ -149,5 +157,33 @@ def archive_vendor_package(request, package_id):
     package.save()
     messages.success(request, "Vendor Package Archived Successfully!")
     return redirect('vendor_dashboard')
+
+
+def category_packages(request, category):
+    category_images = {
+        "venues": "wedding_venue.jpg",
+        "photography": "wedding_photography.jpg",
+        "videography": "wedding_videography.jpg",
+        "wedding_favors": "wedding_favours.jpg",
+        "wedding_cake": "wedding_cake.jpg",
+    }
+    category_banner_name = {
+        "venues": "Venue",
+        "photography": "Photography",
+        "videography": "Videography",
+        "wedding_favors": "Wedding Favor",
+        "wedding_cake": "Wedding Cake",
+    }
+    banner_image = category_images.get(category, "default_banner.jpg")
+    category_banner_name = category_banner_name.get(category, "Category")
+
+    packages = VendorPackage.objects.filter(vendor__business_category=category)
+
+    return render(request, 'users/category_packages.html', {
+        'category': category,
+        'packages': packages,
+        'banner_image': banner_image,
+        'category_name': category_banner_name
+    })
 
 

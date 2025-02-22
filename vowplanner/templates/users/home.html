@@ -1,39 +1,92 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container text-center">
-    <!-- Hero Section -->
-    <div class="hero-section">
+<!-- Hero Section -->
+<div class="hero-section text-center d-flex align-items-center justify-content-center">
+    <div class="overlay"></div>
+    <div class="content text-white">
         <h1>Effortless Wedding Planning</h1>
         <p>Plan your dream wedding with ease & connect with trusted vendors...</p>
+        <a href="{% url 'customer_register' %}" class="btn btn-primary btn-lg">Get Started</a>
     </div>
-
-    <!-- Categories -->
-    <div class="row mt-4">
-        <div class="col-md-2"><div class="category-box">VENUES</div></div>
-        <div class="col-md-2"><div class="category-box">PHOTOGRAPHY</div></div>
-        <div class="col-md-2"><div class="category-box">VIDEOGRAPHY</div></div>
-        <div class="col-md-2"><div class="category-box">WEDDING FAVORS</div></div>
-        <div class="col-md-2"><div class="category-box">WEDDING CAKE</div></div>
-    </div>
-
-    <!-- Welcome Message for Logged-in Users -->
-    {% if user.is_authenticated %}
-        <div class="welcome-message">
-            <h3>Welcome, {{ user_name }}!</h3>
-        </div>
-    {% else %}
-        <div class="login-register">
-            <a href="{% url 'login' %}" class="btn btn-dark">Login</a>
-            <a href="{% url 'customer_register' %}" class="btn btn-light">Register</a>
-        </div>
-    {% endif %}
 </div>
 
+<!-- Category Section -->
+<div class="container my-5">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <a href="{% url 'category_packages' category='venues' %}" class="category-card" style="background-image: url('/static/images/wedding_venue.jpg');">
+                <span>Venues</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'category_packages' category='photography' %}" class="category-card" style="background-image: url('/static/images/wedding_photography.jpg');">
+                <span>Photography</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'category_packages' category='videography' %}" class="category-card" style="background-image: url('/static/images/wedding_videography.jpg');">
+                <span>Videography</span>
+            </a>
+        </div>
+    </div>
+    <div class="row text-center mt-4">
+        <div class="col-md-4">
+            <a href="{% url 'category_packages' category='wedding_favors' %}" class="category-card" style="background-image: url('/static/images/wedding_favours.jpg');">
+                <span>Wedding Favors</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'category_packages' category='wedding_cake' %}" class="category-card" style="background-image: url('/static/images/wedding_cake.jpg');">
+                <span>Wedding Cake</span>
+            </a>
+        </div>
+    </div>
+</div>
+<!-- Styles -->
 <style>
-    .hero-section h1 { font-size: 2.5rem; font-weight: bold; }
-    .category-box { background: rgba(0,0,0,0.7); color: white; padding: 20px; text-align: center; }
-    .login-register { margin-top: 20px; }
+    /* Hero Section */
+    .hero-section {
+        position: relative;
+        background: url('/static/images/wedding_hero.jpg') center/cover no-repeat;
+        height: 400px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+    .hero-section .content {
+        position: relative;
+        z-index: 1;
+    }
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: bold;
+    }
+
+    /* Category Cards */
+    .category-card {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.7);
+        border-radius: 8px;
+        background-size: cover;
+        background-position: center;
+        transition: transform 0.3s;
+    }
+    .category-card:hover {
+        transform: scale(1.05);
+    }
 </style>
 
 {% endblock %}

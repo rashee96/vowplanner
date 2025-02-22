@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import User, VendorPackage
+from .models import CustomUser, VendorPackage, Vendor
 
 class CustomerRegistrationForm(UserCreationForm):
     customer_name = forms.CharField(
@@ -21,7 +21,7 @@ class CustomerRegistrationForm(UserCreationForm):
     )
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['customer_name', 'username', 'email', 'password1', 'password2']
 
     def save(self, commit=True):
@@ -37,6 +37,13 @@ class CustomerRegistrationForm(UserCreationForm):
             field.widget.attrs.update({'class': 'form-control'})
 
 class VendorRegistrationForm(UserCreationForm):
+    BUSINESS_CATEGORIES = [
+        ('venues', 'Venues'),
+        ('photography', 'Photography'),
+        ('videography', 'Videography'),
+        ('wedding_favors', 'Wedding Favors'),
+        ('wedding_cake', 'Wedding Cake'),
+    ]
     vendor_name = forms.CharField(
         max_length=255,
         required=True,
@@ -45,7 +52,11 @@ class VendorRegistrationForm(UserCreationForm):
     )
 
     business_name = forms.CharField(max_length=255, required=True, help_text="Enter your business name")
-    business_category = forms.CharField(max_length=255, required=True, help_text="Enter business category")
+    business_category = forms.ChoiceField(
+        choices=BUSINESS_CATEGORIES,
+        required=True,
+        label="Business Category"
+    )
     contact_no = forms.CharField(max_length=15, required=True, help_text="Enter your contact number")
 
     password1 = forms.CharField(
@@ -59,17 +70,21 @@ class VendorRegistrationForm(UserCreationForm):
     )
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['vendor_name', 'username', 'email', 'business_name', 'business_category', 'contact_no', 'password1', 'password2']
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.user_type = 'vendor'
-        user.business_name = self.cleaned_data['business_name']
-        user.business_category = self.cleaned_data['business_category']
-        user.contact_no = self.cleaned_data['contact_no']
+        user.user_type = 'vendor'  # ✅ Set user type
         if commit:
             user.save()
+            # ✅ Create a Vendor instance linked to this user
+            Vendor.objects.create(
+                user=user,
+                business_name=self.cleaned_data['business_name'],
+                business_category=self.cleaned_data['business_category'],
+                contact_no=self.cleaned_data['contact_no']
+            )
         return user
 
     def __init__(self, *args, **kwargs):

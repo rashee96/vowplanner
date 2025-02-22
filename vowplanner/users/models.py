@@ -1,9 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
-class User(AbstractUser):
+class CustomUser(AbstractUser):
     USER_TYPES = (
         ('customer', 'Customer'),
         ('vendor', 'Vendor'),
@@ -20,15 +20,21 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.user_type})"
-    
+
+
 class Vendor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'vendor'})  # ✅ Ensuring only vendors are linked
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,  # ✅ Use AUTH_USER_MODEL instead of User
+        on_delete=models.CASCADE,
+        limit_choices_to={'user_type': 'vendor'}
+    )  # ✅ Ensuring only vendors are linked
     business_name = models.CharField(max_length=255)
     business_category = models.CharField(max_length=100)
     contact_no = models.CharField(max_length=20)
 
     def __str__(self):
         return self.business_name
+
 
 class VendorPackage(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
