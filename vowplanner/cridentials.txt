@@ -1,0 +1,8 @@
+postgres
+un/pw - django/django
+un/pw - postgres/postgres
+
+django admin
+un - rashminiperera
+email - rashmini096@gmail.com
+pw - admin

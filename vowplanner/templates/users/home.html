@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container text-center">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1>Effortless Wedding Planning</h1>
+        <p>Plan your dream wedding with ease & connect with trusted vendors...</p>
+    </div>
+
+    <!-- Categories -->
+    <div class="row mt-4">
+        <div class="col-md-2"><div class="category-box">VENUES</div></div>
+        <div class="col-md-2"><div class="category-box">PHOTOGRAPHY</div></div>
+        <div class="col-md-2"><div class="category-box">VIDEOGRAPHY</div></div>
+        <div class="col-md-2"><div class="category-box">WEDDING FAVORS</div></div>
+        <div class="col-md-2"><div class="category-box">WEDDING CAKE</div></div>
+    </div>
+
+    <!-- Welcome Message for Logged-in Users -->
+    {% if user.is_authenticated %}
+        <div class="welcome-message">
+            <h3>Welcome, {{ user_name }}!</h3>
+        </div>
+    {% else %}
+        <div class="login-register">
+            <a href="{% url 'login' %}" class="btn btn-dark">Login</a>
+            <a href="{% url 'customer_register' %}" class="btn btn-light">Register</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .hero-section h1 { font-size: 2.5rem; font-weight: bold; }
+    .category-box { background: rgba(0,0,0,0.7); color: white; padding: 20px; text-align: center; }
+    .login-register { margin-top: 20px; }
+</style>
+
+{% endblock %}

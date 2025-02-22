@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="card p-4 shadow-lg" style="width: 400px;">
+        <h3 class="text-center mb-4">Customer Sign Up</h3>
+
+        <!-- Display Form Errors -->
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <li> {{ error }}</li> {# ✅ Use field.label instead of field|title #}
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Sign-Up Form -->
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>  {# ✅ This ensures correct labels are displayed #}
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-dark w-100">Sign Up</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <span>Already a Member? <a href="{% url 'login' %}">Login here</a></span>
+        </div>
+    </div>
+</div>
+{% endblock %}
