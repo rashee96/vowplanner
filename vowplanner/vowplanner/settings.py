@@ -126,8 +126,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -142,6 +140,13 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+GOOGLE_CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials", "google_credentials.json")  # ✅ Correct path
+
+# Google OAuth scopes (Allow reading & writing events)
+GOOGLE_CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
 

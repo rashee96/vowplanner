@@ -10,10 +10,20 @@ from .models import VendorPackage, CustomUser
 from .forms import VendorPackageForm
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from users.models import UnavailableDate
+import os
+import json
+import datetime
+from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from django.conf import settings
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
 
@@ -222,3 +232,168 @@ def save_unavailable_dates(request):
         return JsonResponse({"message": "Unavailable dates saved successfully."})
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+@login_required
+def google_auth(request):
+    """Initiates Google OAuth authentication process"""
+    if 'google_credentials' in request.session:
+        del request.session['google_credentials']
+        request.user.google_authorized = False  # Reset authorization status
+        request.user.save()
+
+    flow = Flow.from_client_secrets_file(
+        settings.GOOGLE_CREDENTIALS_FILE,
+        scopes=settings.GOOGLE_CALENDAR_SCOPES,
+        redirect_uri="http://localhost:8000/users/oauth/callback/"
+    )
+
+    auth_url, _ = flow.authorization_url(prompt='consent')  # ✅ Force user consent
+    return redirect(auth_url)
+
+@login_required
+def google_auth_callback(request):
+    """Handles the Google OAuth callback and stores credentials"""
+    flow = Flow.from_client_secrets_file(
+        settings.GOOGLE_CREDENTIALS_FILE,
+        scopes=settings.GOOGLE_CALENDAR_SCOPES,
+        redirect_uri="http://localhost:8000/users/oauth/callback/"
+    )
+
+    flow.fetch_token(authorization_response=request.build_absolute_uri())
+
+    credentials = flow.credentials
+
+    # ✅ Ensure refresh_token is saved (Google may not return it on every request)
+    if not credentials.refresh_token:
+        stored_credentials = request.session.get('google_credentials', {})
+        credentials.refresh_token = stored_credentials.get('refresh_token')  # Use old refresh token if missing
+
+    request.session['google_credentials'] = {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+    # ✅ Mark user as authorized
+    user = request.user
+    user.google_authorized = True
+    user.save()
+
+    return redirect('vendor_dashboard')
+
+@login_required
+def fetch_google_calendar_events(request):
+    """Fetches only events created by Vow Planner"""
+    credentials_data = request.session.get('google_credentials')
+
+    if not credentials_data:
+        return JsonResponse({'error': 'User not authenticated with Google'}, status=401)
+
+    try:
+        credentials = Credentials(**credentials_data)
+        service = build("calendar", "v3", credentials=credentials)
+
+        now = datetime.datetime.utcnow().isoformat() + "Z"
+
+        events_result = service.events().list(
+            calendarId="primary",
+            timeMin=now,
+            maxResults=50,
+            singleEvents=True,
+            orderBy="startTime"
+        ).execute()
+
+        events = events_result.get("items", [])
+
+        # ✅ Filter only events that contain the "Created by Vow Planner" marker
+        vow_planner_events = []
+        print(json.dumps(events, indent=4))  # Debugging step: Print all fetched events
+        for event in events:
+            description = event.get("description", "").lower()
+            extended_properties = event.get("extendedProperties", {}).get("private", {})
+
+            if (
+                "created by vow planner" in description or
+                extended_properties.get("created_by") == "vowplanner"
+            ):
+                vow_planner_events.append({
+                    "id": event["id"],
+                    "title": event["summary"],
+                    "start": event["start"].get("dateTime", event["start"].get("date")),
+                    "end": event["end"].get("dateTime", event["end"].get("date"))
+                })
+
+        return JsonResponse(vow_planner_events, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Google API Error: {str(e)}'}, status=500)
+
+@login_required
+def add_google_calendar_event(request):
+    """Adds an event to Google Calendar with a Vow Planner identifier"""
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+    credentials_data = request.session.get('google_credentials')
+
+    if not credentials_data:
+        return JsonResponse({'error': 'User not authenticated with Google'}, status=401)
+
+    credentials = Credentials(**credentials_data)
+    service = build("calendar", "v3", credentials=credentials)
+
+    data = json.loads(request.body)
+    event_title = data.get("title")
+    event_date = data.get("date")
+
+    if not event_title or not event_date:
+        return JsonResponse({'error': 'Missing event details'}, status=400)
+
+    event_body = {
+        "summary": event_title,
+        "description": "Created by Vow Planner",  # ✅ Add this to help filtering later
+        "start": {"date": event_date},
+        "end": {"date": event_date},
+        "extendedProperties": {
+            "private": {
+                "created_by": "vowplanner"  # ✅ Add structured metadata for filtering
+            }
+        }
+    }
+
+    created_event = service.events().insert(calendarId="primary", body=event_body).execute()
+
+    return JsonResponse({"success": True, "event_id": created_event["id"]})
+
+@login_required
+def delete_google_calendar_event(request):
+    """Deletes an event from Google Calendar"""
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+    credentials_data = request.session.get('google_credentials')
+
+    if not credentials_data:
+        return JsonResponse({'error': 'User not authenticated with Google'}, status=401)
+
+    credentials = Credentials(**credentials_data)
+    service = build("calendar", "v3", credentials=credentials)
+
+    data = json.loads(request.body)
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return JsonResponse({'error': 'Missing event ID'}, status=400)
+
+    service.events().delete(calendarId="primary", eventId=event_id).execute()
+
+    return JsonResponse({"success": True})
+
+def clear_google_credentials(request):
+    """Clears stored Google credentials from session"""
+    if 'google_credentials' in request.session:
+        del request.session['google_credentials']
+    return redirect('google_auth')

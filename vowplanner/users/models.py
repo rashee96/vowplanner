@@ -15,6 +15,7 @@ class CustomUser(AbstractUser):
     contact_no = models.CharField(max_length=15, blank=True, null=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='customer')
     is_approved = models.BooleanField(default=False)  # For admin approval
+    google_authorized = models.BooleanField(default=False)
 
     REQUIRED_FIELDS = ['email', 'contact_no']
 
