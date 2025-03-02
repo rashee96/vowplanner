@@ -3,6 +3,6 @@ un/pw - django/django
 un/pw - postgres/postgres
 
 django admin
-un - rashminiperera
+un - admin
 email - rashmini096@gmail.com
 pw - admin

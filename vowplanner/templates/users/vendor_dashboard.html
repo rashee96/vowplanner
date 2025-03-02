@@ -3,8 +3,32 @@
 
 <div class="container">
     <h2 class="text-center">Vendor Dashboard</h2>
-    
-    <a href="{% url 'create_vendor_package' %}" class="btn btn-dark mb-3">Create New Package</a>
+    <div class="d-flex gap-2 mb-3">
+        <a href="{% url 'create_vendor_package' %}" class="btn btn-primary">Create New Package</a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateCalendarModal">Update Calendar</button>
+    </div>
+
+<!-- Update Calendar Modal -->
+<div class="modal fade" id="updateCalendarModal" tabindex="-1" aria-labelledby="updateCalendarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateCalendarModalLabel">Update Unavailable Dates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="calendar"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="saveUnavailableDates">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include FullCalendar CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css">
 
     {% if messages %}
     <div class="alert alert-success">
@@ -19,20 +43,43 @@
             <thead>
                 <tr>
                     <th>Package Name</th>
-                    <th>Description</th>
                     <th>Price</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for package in packages %}
-                <tr>
+                <tr id="package-row-{{ package.id }}">
                     <td>{{ package.pkg_name }}</td>
-                    <td>{{ package.pkg_description }}</td>
-                    <td>${{ package.pkg_price }}</td>
+                    <td>{{ package.pkg_price }} LKR</td>
                     <td>
                         <a href="{% url 'update_vendor_package' package.id %}" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="{% url 'archive_vendor_package' package.id %}" class="btn btn-danger btn-sm">Archive</a>
+                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal-{{ package.id }}">
+                            Archive
+                        </button>
+
+                        <!-- Archive Modal-->
+                        <div class="modal fade" id="archiveModal-{{ package.id }}" tabindex="-1" aria-labelledby="archiveModalLabel-{{ package.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Archive Package</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Tell us why you want to archive this package:</p>
+                                        <textarea id="archiveReason-{{ package.id }}" class="form-control"
+                                        placeholder="Enter reason for archiving..." rows="3"
+                                        oninput="toggleDoneButton('{{ package.id }}')">
+                                    </textarea>
+                                                                        </div>
+                                    <div class="modal-footer">
+                                        <button id="archiveDone-{{ package.id }}" class="btn btn-danger" onclick="archivePackage('{{ package.id }}')" style="display: none;">Done</button>
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -42,5 +89,111 @@
         <p>No packages created yet.</p>
     {% endif %}
 </div>
+
+<!--JavaScript-->
+<script>
+    function toggleDoneButton(packageId) {
+        let reasonField = document.getElementById("archiveReason-" + packageId);
+        let doneButton = document.getElementById("archiveDone-" + packageId);
+
+        if (reasonField.value.trim().length > 0) {
+            doneButton.style.display = "block";  // Show "Done" button
+        } else {
+            doneButton.style.display = "none";  // Hide "Done" button if empty
+        }
+    }
+
+    function archivePackage(packageId) {
+        let reasonField = document.getElementById("archiveReason-" + packageId);
+        let reason = reasonField.value.trim();
+        let packageRow = document.getElementById("package-row-" + packageId);
+        let modal = document.getElementById("archiveModal-" + packageId);
+
+        if (reason.length === 0) {
+            alert("Please enter a reason before archiving.");
+            return;
+        }
+
+        fetch(`/users/vendor/package/archive/${packageId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                packageRow.remove();  
+                alert("Package archived successfully!");
+                
+                
+                let bootstrapModal = bootstrap.Modal.getInstance(modal);
+                bootstrapModal.hide();
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+</script>
+
+<!-- Include FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let unavailableDates = []; // Array to store unavailable dates
+        const calendarEl = document.getElementById("calendar");
+        
+        // Initialize FullCalendar
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            selectable: true,
+            select: function (info) {
+                const selectedDate = info.startStr;
+                const index = unavailableDates.indexOf(selectedDate);
+
+                if (index === -1) {
+                    unavailableDates.push(selectedDate);
+                } else {
+                    unavailableDates.splice(index, 1);
+                }
+
+                calendar.refetchEvents();
+            },
+            events: function (fetchInfo, successCallback) {
+                let events = unavailableDates.map(date => ({
+                    title: "Unavailable",
+                    start: date,
+                    allDay: true,
+                    backgroundColor: "red",
+                    borderColor: "red",
+                }));
+                successCallback(events);
+            },
+        });
+
+        calendar.render();
+
+        // Save Button Click
+        document.getElementById("saveUnavailableDates").addEventListener("click", function () {
+            fetch("{% url 'save_unavailable_dates' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ unavailable_dates: unavailableDates }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Unavailable dates saved successfully!");
+                location.reload();
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+</script>
 
 {% endblock %}

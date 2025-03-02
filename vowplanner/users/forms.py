@@ -1,6 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser, VendorPackage, Vendor
+from django import forms
+from .models import VendorPackage
+from django.forms.widgets import ClearableFileInput
 
 class CustomerRegistrationForm(UserCreationForm):
     customer_name = forms.CharField(
@@ -11,12 +14,12 @@ class CustomerRegistrationForm(UserCreationForm):
     )
 
     password1 = forms.CharField(
-        label="Password",  # ✅ Rename Password1
+        label="Password",  
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
 
     password2 = forms.CharField(
-        label="Confirm Password",  # ✅ Rename Password2
+        label="Confirm Password",  
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
 
@@ -38,11 +41,11 @@ class CustomerRegistrationForm(UserCreationForm):
 
 class VendorRegistrationForm(UserCreationForm):
     BUSINESS_CATEGORIES = [
-        ('venues', 'Venues'),
-        ('photography', 'Photography'),
-        ('videography', 'Videography'),
-        ('wedding_favors', 'Wedding Favors'),
-        ('wedding_cake', 'Wedding Cake'),
+        ('Venues', 'Venues'),
+        ('Photography', 'Photography'),
+        ('Videography', 'Videography'),
+        ('Wedding_favors', 'Wedding Favors'),
+        ('Wedding_cake', 'Wedding Cake'),
     ]
     vendor_name = forms.CharField(
         max_length=255,
@@ -60,12 +63,12 @@ class VendorRegistrationForm(UserCreationForm):
     contact_no = forms.CharField(max_length=15, required=True, help_text="Enter your contact number")
 
     password1 = forms.CharField(
-        label="Password",  # ✅ Rename Password1
+        label="Password",  
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
 
     password2 = forms.CharField(
-        label="Confirm Password",  # ✅ Rename Password2
+        label="Confirm Password", 
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
 
@@ -75,10 +78,10 @@ class VendorRegistrationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.user_type = 'vendor'  # ✅ Set user type
+        user.user_type = 'vendor'  
         if commit:
             user.save()
-            # ✅ Create a Vendor instance linked to this user
+
             Vendor.objects.create(
                 user=user,
                 business_name=self.cleaned_data['business_name'],

@@ -24,10 +24,10 @@ class CustomUser(AbstractUser):
 
 class Vendor(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,  # ✅ Use AUTH_USER_MODEL instead of User
+        settings.AUTH_USER_MODEL,  
         on_delete=models.CASCADE,
         limit_choices_to={'user_type': 'vendor'}
-    )  # ✅ Ensuring only vendors are linked
+    )  
     business_name = models.CharField(max_length=255)
     business_category = models.CharField(max_length=100)
     contact_no = models.CharField(max_length=20)
@@ -43,7 +43,15 @@ class VendorPackage(models.Model):
     images = models.ImageField(upload_to='package_images/', null=True, blank=True)
     pkg_price = models.DecimalField(max_digits=10, decimal_places=2)
     is_archived = models.BooleanField(default=False)
+    #archive_reason = models.TextField(blank=True, null=True)
+
 
     def __str__(self):
         return self.pkg_name
+    
+class UnavailableDate(models.Model):
+    date = models.DateField(unique=True)
+
+    def __str__(self):
+        return str(self.date)   
 
