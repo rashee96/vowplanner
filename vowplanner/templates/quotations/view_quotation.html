@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load humanize %}  <!-- ✅ Load humanize for intcomma filter -->
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="text-end">
+            {% if request.user == quotation.vendor.user %}
+                {% if quotation.status == "draft" %}
+                    <a href="{% url 'quotations:confirm_quotation' quotation.id %}"
+                       class="btn btn-warning">Confirm</a>
+                {% endif %}
+                {% if quotation.status == "in_payment" and quotation.receipt_attachment %}
+                    <a href="{{ quotation.receipt_attachment.url }}" target="_blank"
+                       class="btn btn-primary">View Payment Receipt</a>
+                    <a href="{% url 'quotations:mark_as_paid' quotation.id %}"
+                       class="btn btn-success">Mark as Paid</a>
+                {% endif %}
+            {% endif %}
+
+            {% if request.user == quotation.customer_user %}
+                {% if is_valid and quotation.status == "confirmed" %}
+                    <a href="{% url 'quotations:accept_quotation' quotation.id %}"
+                       class="btn btn-success">Accept</a>
+                {% endif %}
+                {% if quotation.status == "accepted" %}
+                    <button class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#payModal">Pay</button>
+                {% endif %}
+            {% endif %}
+            {% if user_type == 'customer' %}
+                <a href="{% url 'events:user_booking_list' %}" class="btn btn-secondary">Back</a>
+            {% endif %}
+            {% if user_type == 'vendor' %}
+                <a href="{% url 'users:vendor_dashboard' %}" class="btn btn-secondary">Back</a>
+            {% endif %}
+        </div>
+        <h2>Quotation for {{ quotation.customer_name }}</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Package:</strong> {{ quotation.vendor_package.pkg_name }}</p>
+                <p><strong>Vendor:</strong> {{ quotation.vendor.business_name }}</p>
+                <p><strong>Date:</strong> {{ quotation.event_date }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <label><strong>Status:</strong></label>
+                <span class="badge bg-info">{{ quotation.get_status_display }}</span>
+            </div>
+        </div>
+
+        <hr>
+
+        <h4>Quotation Items</h4>
+        <table class="table table-bordered mt-3">
+            <thead>
+            <tr>
+                <th style="width: 70%;">Description</th>
+                <th style="width: 30%; text-align: center;">Price (LKR)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for line in quotation.lines.all %}
+                <tr>
+                    <td><span>{{ line.description }}</span></td>
+                    <td class="text-center">
+                        <span>LKR {{ line.price|intcomma }}</span>  <!-- ✅ Apply comma separator -->
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+
+        <div class="row mt-4">
+            <div class="col-md-6"></div>
+            <div class="col-md-6 text-end">
+                <p><strong>Subtotal:</strong> LKR {{ quotation.total_price|intcomma }}</p>  <!-- ✅ -->
+                <p><strong>Discount:</strong> LKR {{ quotation.discount|intcomma }}</p>  <!-- ✅ -->
+                <p><strong>Net Total:</strong> LKR {{ quotation.net_total|intcomma }}</p>  <!-- ✅ -->
+            </div>
+        </div>
+
+        <hr>
+
+        <h5>Note:</h5>
+        <p>
+            This quotation is valid for a period of <strong>7 days</strong> from the date of issuance.
+            Prices and availability are subject to change. Please confirm your booking within the
+            validity period to secure the quoted rates.
+        </p>
+
+        <hr>
+
+        <h5>Payment Method</h5>
+        <p>{{ quotation.payment_method }}</p>
+
+        <hr>
+
+        <!-- Payment Upload Modal -->
+        <div class="modal fade" id="payModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Submit Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST"
+                              action="{% url 'quotations:submit_payment' quotation.id %}"
+                              enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="customerNote">Note (Optional)</label>
+                                <textarea name="customer_note" class="form-control"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentReceipt">Upload Receipt</label>
+                                <input type="file" name="receipt_attachment" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Payment</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

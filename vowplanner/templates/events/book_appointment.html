@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% load static %}
+
+    <div class="container mt-5">
+        <h2>Book an Appointment</h2>
+        <p><strong>Package:</strong> {{ package.pkg_name }}</p>
+        <p><strong>Vendor:</strong> {{ package.vendor.business_name }}</p>
+        <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+        <div id="calendar" data-package-id="{{ package.id }}"></div>
+
+        <button id="confirmBooking" class="btn btn-success mt-3" disabled
+                data-url="{% url 'events:book_appointment' package.id %}">
+            Confirm Booking
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="{% static 'js/book_appointment.js' %}"></script>
+{% endblock %}

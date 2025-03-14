@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center">{{ title }}</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label class="form-label">Package Name</label>
+            {{ form.pkg_name }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{ form.pkg_description }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload Image</label>
+            {{ form.images }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Price (LKR)</label>
+            {{ form.pkg_price }}
+        </div>
+
+        <button type="submit" class="btn btn-dark">Save Package</button>
+        <a href="{% url 'users:vendor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

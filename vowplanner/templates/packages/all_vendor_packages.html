@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container my-4">
+        <h2 class="text-center mb-4">All Vendor Packages</h2>
+
+        <!-- Filters Section -->
+        <form method="GET" class="mb-4">
+            <div class="row g-3">
+                <!-- Search by Name -->
+                <div class="col-md-2">
+                    <label for="packageName" class="form-label">Package Name</label>
+                    <input type="text" name="search" value="{{ search_query }}" class="form-control" id="packageName"
+                           placeholder="Search by package name">
+                </div>
+
+                <!-- Filter by Vendor Type -->
+                <div class="col-md-2">
+                    <label for="vendorType" class="form-label">Vendor Type</label>
+                    <select name="package_type" class="form-select" id="vendorType">
+                        <option value="">All Vendor Types</option>
+                        {% for type in vendor_types %}
+                            <option value="{{ type }}"
+                                    {% if selected_type == type %}selected{% endif %}>{{ type|capfirst }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date Filter -->
+                <div class="col-md-2">
+                    <label for="eventDate" class="form-label">Event Date</label>
+                    <input type="date" name="event_date" id="eventDate" class="form-control"
+                           value="{{ selected_date }}">
+                </div>
+
+                <!-- Min Price -->
+                <div class="col-md-2">
+                    <label for="min_price" class="form-label">Min Price (LKR)</label>
+                    <input type="number" name="min_price" id="min_price" class="form-control"
+                           value="{{ min_price }}" min="0">
+                </div>
+
+                <!-- Max Price -->
+                <div class="col-md-2">
+                    <label for="max_price" class="form-label">Max Price (LKR)</label>
+                    <input type="number" name="max_price" id="max_price" class="form-control"
+                           value="{{ max_price }}" min="0">
+                </div>
+
+                <!-- Filter & Reset Buttons -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-dark me-2">Apply Filters</button>
+                    <a href="{% url 'packages:all_vendor_packages' %}" class="btn btn-danger">Reset</a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Packages Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th class="text-center">Package Name</th>
+                    <th class="text-center">Vendor</th>
+                    <th class="text-center">Type</th>
+                    <th class="text-center">Price (LKR)</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for package in packages %}
+                    <tr>
+                        <td class="text-center">{{ package.pkg_name }}</td>  <!-- ✅ Capitalize package names -->
+                        <td class="text-center">{{ package.vendor.business_name|capfirst }}</td>
+                        <td class="text-center">{{ package.vendor.business_category|capfirst }}</td>
+                        <td class="text-center">{{ package.pkg_price|floatformat:2|intcomma }} </td>
+                        <td class="text-center">
+                            <a href="{% url 'packages:package_detail' package.id %}"
+                               class="btn btn-primary btn-sm">View</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="{% static 'js/vendor_package.js' %}"></script>
+{% endblock %}

@@ -1,9 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, VendorPackage, Vendor
-from django import forms
-from .models import VendorPackage
-from django.forms.widgets import ClearableFileInput
+from .models import CustomUser, Vendor
 
 class CustomerRegistrationForm(UserCreationForm):
     customer_name = forms.CharField(
@@ -100,14 +97,3 @@ class LoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
-
-class VendorPackageForm(forms.ModelForm):
-    class Meta:
-        model = VendorPackage
-        fields = ['pkg_name', 'pkg_description', 'images', 'pkg_price']
-        widgets = {
-            'pkg_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'pkg_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'images': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'pkg_price': forms.NumberInput(attrs={'class': 'form-control'}),
-        }

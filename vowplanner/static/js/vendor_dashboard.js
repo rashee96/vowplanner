@@ -20,7 +20,7 @@ function archivePackage(packageId) {
         return;
     }
 
-    fetch(`/users/vendor/package/archive/${packageId}/`, {
+    fetch(`/packages/vendor/package/archive/${packageId}/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         initialView: "dayGridMonth",
         selectable: true,
         editable: true,
-        events: "/users/fetch_google_events/",  // ✅ Fetch Google Calendar events
+        events: "/events/get_all_events/",  // Fetch from both DB & Google
 
         select: function (info) {
             selectedDate = info.startStr;
@@ -69,32 +69,56 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("deleteEventId").value = info.event.id;
             let deleteEventModal = new bootstrap.Modal(document.getElementById("deleteEventModal"));
             deleteEventModal.show();
+        },
+        eventDidMount: function (info) {
+            if (info.event.extendedProps.state === "booked") {
+                info.el.style.backgroundColor = "#28a745";
+            } else if (info.event.extendedProps.state === "on_hold") {
+                info.el.style.backgroundColor = "#ffc107";
+            }
         }
     });
 
     calendar.render();
 
-    // Add Event
+    // Add Event with Additional Details
     document.getElementById("saveEventBtn").addEventListener("click", function () {
-        let eventTitle = document.getElementById("eventTitle").value;
-        if (!eventTitle.trim()) {
-            alert("Event title is required!");
+        let eventTitle = document.getElementById("eventTitle").value.trim();
+        let customerName = document.getElementById("customerName").value.trim();
+        let customerEmail = document.getElementById("customerEmail").value.trim();
+        let contactNumber = document.getElementById("contactNumber").value.trim();
+        let eventDate = document.getElementById("eventDate").value;
+        let eventStatus = document.getElementById("eventStatus").value;
+        let vendorPackage = document.getElementById("vendorPackage").value;
+
+        if (!eventTitle || !customerName || !contactNumber || !eventDate || !customerEmail || !vendorPackage) {
+            alert("Please fill in all required fields.");
             return;
         }
 
-        fetch("/users/add_google_event/", {
+        let eventData = {
+            title: eventTitle,
+            customer_name: customerName,
+            email: customerEmail,
+            contact_no: contactNumber,
+            date: eventDate,
+            status: eventStatus,
+            vendor_package: vendorPackage
+        };
+
+        fetch("/events/add_google_event/", {
             method: "POST",
             headers: {
-                "X-CSRFToken": getCSRFToken(),
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({title: eventTitle, date: selectedDate}),
+            body: JSON.stringify(eventData),
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     calendar.refetchEvents();
-                    document.getElementById("eventTitle").value = "";  // Clear input
+                    document.getElementById("addEventForm").reset();
                     bootstrap.Modal.getInstance(document.getElementById("addEventModal")).hide();
                 } else {
                     alert("Error: " + data.error);
@@ -103,11 +127,11 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(error => console.error("Error:", error));
     });
 
-    // Delete Event
+    // Delete Event from DB & Google
     document.getElementById("confirmDeleteEventBtn").addEventListener("click", function () {
         let eventId = document.getElementById("deleteEventId").value;
 
-        fetch("/users/delete_google_event/", {
+        fetch("/events/delete_google_event/", {
             method: "POST",
             headers: {
                 "X-CSRFToken": getCSRFToken(),
@@ -128,11 +152,45 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+document.getElementById("syncEventsBtn").addEventListener("click", function () {
+    fetch("/events/fetch_and_save_google_events/", {
+        method: "GET",
+        headers: {"X-CSRFToken": getCSRFToken()},
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Events Synced!");
+                window.location.reload();
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(error => console.error("Error:", error));
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     const reauthorizeBtn = document.getElementById("reauthorizeGoogleBtn");
     if (reauthorizeBtn) {
         reauthorizeBtn.addEventListener("click", function () {
-            window.location.href = "{% url 'google_auth' %}"; // Replace with your actual URL
+            window.location.href = "{% url 'events:google_auth' %}"; // Replace with your actual URL
         });
     }
+    // Sync Events Button
+    document.getElementById("syncEventsBtn").addEventListener("click", function () {
+        fetch("/events/fetch_and_save_google_events/", {
+            method: "GET",
+            headers: {"X-CSRFToken": getCSRFToken()},
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Events Synced!");
+                    calendar.refetchEvents();
+                } else {
+                    alert("Error: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+    });
 });

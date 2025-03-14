@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% load static %}
+    <div class="container mt-5">
+        <h2>Create Quotation</h2>
+
+        <!-- Save Button at the Top -->
+        <form method="POST" id="quotationForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <button type="submit" class="btn btn-success mb-3">Save Quotation</button>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Customer:</strong> {{ event.customer_name }}</p>
+                    <p><strong>Package:</strong> {{ event.vendor_package.pkg_name }}</p>
+                    <p><strong>Vendor:</strong> {{ event.vendor.business_name }}</p>
+                    <p><strong>Date:</strong> {{ event.event_date }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <label><strong>Status:</strong></label>
+                    <select name="status" class="form-control w-auto d-inline">
+                        <option value="draft"
+                                {% if quotation.status == "draft" %}selected{% endif %}>Draft
+                        </option>
+                        <option value="confirmed"
+                                {% if quotation.status == "confirmed" %}selected{% endif %}>
+                            Confirmed
+                        </option>
+                        <option value="cancelled"
+                                {% if quotation.status == "cancelled" %}selected{% endif %}>
+                            Cancelled
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Quotation Items Table -->
+            <h4>Quotation Items</h4>
+            <table class="table table-bordered mt-3" id="quotationTable">
+                <thead>
+                <tr>
+                    <th style="width: 70%;">Description</th>
+                    <th style="width: 20%; text-align: center;">Price (LKR)</th>
+                    <th style="width: 10%; text-align: center;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for form in formset %}
+                    <tr class="quotation-line">
+                        <td>{{ form.description }}</td>
+                        <td style="text-align: center;">
+                            {{ form.price }}
+                        </td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn btn-danger btn-sm remove-line">Remove
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <button type="button" class="btn btn-primary" id="addLine">Add Line</button>
+
+            <hr>
+
+            <!-- Totals Section -->
+            <div class="row mt-4">
+                <div class="col-md-6"></div>
+                <div class="col-md-6 text-end">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Subtotal:</strong> LKR
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <p><span id="subtotal">0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Discount:</strong> LKR
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <input type="number" name="discount" id="discount"
+                                   class="form-control w-auto d-inline text-center"
+                                   value="{{ quotation.discount|default:0 }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Net Total:</strong> LKR
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <p><span id="nettotal">0.00</span></p>
+                        </div>
+                    </div>
+                    <input type="hidden" name="total_price" id="total_price"
+                           value="{{ quotation.total_price|default:0 }}">
+                    <input type="hidden" name="net_total" id="net_total"
+                           value="{{ quotation.net_total|default:0 }}">
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Note Section -->
+            <h5>Note:</h5>
+            <p>
+                This quotation is valid for a period of <strong>7 days</strong> from the date of
+                issuance.
+                Prices and availability are subject to change. Please confirm your booking within
+                the
+                validity period to secure the quoted rates.
+            </p>
+
+            <hr>
+
+            <!-- Payment Method -->
+            <h5>Payment Method</h5>
+            <textarea name="payment_method" class="form-control" rows="3"
+                      placeholder="Enter payment account details...">{{ quotation.payment_method|default:"Bank Account: XXXXXXX, Bank Name: XYZ Bank, Branch: ABC" }}</textarea>
+
+        </form>
+    </div>
+
+    <script src="{% static 'js/create_quotation.js' %}"></script>
+{% endblock %}

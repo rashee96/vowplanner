@@ -33,21 +33,21 @@
                                 Welcome, {{ user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'vendor_dashboard' %}">Dashboard</a></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:vendor_dashboard' %}">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">Logout</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <!-- Register Buttons -->
                         <li class="nav-item">
-                            <a class="btn btn-outline-light me-2" href="{% url 'vendor_register' %}">Register as Vendor</a>
+                            <a class="btn btn-outline-light me-2" href="{% url 'users:vendor_register' %}">Register as Vendor</a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-outline-light me-2" href="{% url 'customer_register' %}">Register as Customer</a>
+                            <a class="btn btn-outline-light me-2" href="{% url 'users:customer_register' %}">Register as Customer</a>
                         </li>
                         <!-- Login Button -->
                         <li class="nav-item">
-                            <a class="btn btn-primary" href="{% url 'login' %}">Login</a>
+                            <a class="btn btn-primary" href="{% url 'users:login' %}">Login</a>
                         </li>
                     {% endif %}
                 </ul>
