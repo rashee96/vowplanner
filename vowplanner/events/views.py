@@ -36,16 +36,16 @@ def get_all_events(request):
 @login_required
 def add_google_calendar_event(request):
     """Adds an event to Google Calendar and saves it in the Django database."""
-    if request.method != "POST":
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    # if request.method != "POST":
+        # return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-    credentials_data = request.session.get('google_credentials')
+    # credentials_data = request.session.get('google_credentials')
 
-    if not credentials_data:
-        return JsonResponse({'error': 'User not authenticated with Google'}, status=401)
+    # if not credentials_data:
+        # return JsonResponse({'error': 'User not authenticated with Google'}, status=401)
 
-    credentials = Credentials(**credentials_data)
-    service = build("calendar", "v3", credentials=credentials)
+    # credentials = Credentials(**credentials_data)
+    # service = build("calendar", "v3", credentials=credentials)
 
     data = json.loads(request.body)
     event_title = data.get("title")
@@ -56,8 +56,8 @@ def add_google_calendar_event(request):
     vendor_package_id = data.get("vendor_package", None)  # Get vendor package
     state = data.get("status", "on_hold")
 
-    if not event_title or not event_date or not vendor_package_id:
-        return JsonResponse({'error': 'Missing required event details'}, status=400)
+    # if not event_title or not event_date or not vendor_package_id:
+    #     return JsonResponse({'error': 'Missing required event details'}, status=400)
 
     # Validate vendor package
     try:
@@ -65,22 +65,21 @@ def add_google_calendar_event(request):
     except VendorPackage.DoesNotExist:
         return JsonResponse({'error': 'Invalid vendor package selected'}, status=400)
 
-    # Create the event in Google Calendar
-    event_body = {
-        "summary": event_title,
-        "description": f"Created by Vow Planner | Package: {vendor_package.pkg_name}",
-        "start": {"date": event_date},
-        "end": {"date": event_date},
-        "extendedProperties": {
-            "private": {
-                "created_by": "vowplanner"
-            }
-        }
-    }
+    # # Create the event in Google Calendar
+    # event_body = {
+    #     "summary": event_title,
+    #     "description": f"Created by Vow Planner | Package: {vendor_package.pkg_name}",
+    #     "start": {"date": event_date},
+    #     "end": {"date": event_date},
+    #     "extendedProperties": {
+    #         "private": {
+    #             "created_by": "vowplanner"
+    #         }
+    #     }
+    # }
 
-    created_event = service.events().insert(calendarId="primary", body=event_body).execute()
-    google_event_id = created_event["id"]
-
+    # created_event = service.events().insert(calendarId="primary", body=event_body).execute()
+    google_event_id = False
     # Find user if email exists
     customer_user = CustomUser.objects.filter(email=customer_email).first()
 
@@ -219,7 +218,7 @@ def google_auth(request):
     flow = Flow.from_client_secrets_file(
         settings.GOOGLE_CREDENTIALS_FILE,
         scopes=settings.GOOGLE_CALENDAR_SCOPES,
-        redirect_uri="http://localhost:8000/users/oauth/callback/"
+        redirect_uri="http://localhost:8000/events/oauth/callback/"
     )
 
     auth_url, _ = flow.authorization_url(prompt='consent')  # ✅ Force user consent
@@ -231,7 +230,7 @@ def google_auth_callback(request):
     flow = Flow.from_client_secrets_file(
         settings.GOOGLE_CREDENTIALS_FILE,
         scopes=settings.GOOGLE_CALENDAR_SCOPES,
-        redirect_uri="http://localhost:8000/users/oauth/callback/"
+        redirect_uri="http://localhost:8000/events/oauth/callback/"
     )
 
     flow.fetch_token(authorization_response=request.build_absolute_uri())

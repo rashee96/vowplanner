@@ -140,7 +140,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 GOOGLE_CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials",
-                                       "google_credentials_new.json")  # ✅ Correct path
+                                       "google_credentials.json")  # ✅ Correct path
 
 # Google OAuth scopes (Allow reading & writing events)
 GOOGLE_CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
