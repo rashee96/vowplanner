@@ -146,3 +146,12 @@ GOOGLE_CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials",
 GOOGLE_CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 LOGIN_URL = '/users/login/'
+
+# SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'rashmini096@gmail.com'
+EMAIL_HOST_PASSWORD = 'omjwczobaqjxuzwo'
+DEFAULT_FROM_EMAIL = 'Vow Planner <your_email@gmail.com>'

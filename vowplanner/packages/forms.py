@@ -9,6 +9,6 @@ class VendorPackageForm(forms.ModelForm):
         widgets = {
             'pkg_name': forms.TextInput(attrs={'class': 'form-control'}),
             'pkg_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'images': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'images': forms.FileInput(attrs={'class': 'form-control'}),
             'pkg_price': forms.NumberInput(attrs={'class': 'form-control'}),
         }

@@ -5,7 +5,7 @@ from .models import Quotation, QuotationLine
 class QuotationForm(forms.ModelForm):
     class Meta:
         model = Quotation
-        fields = ['discount', 'total_price', 'net_total', 'status']
+        fields = ['discount', 'total_price', 'net_total', 'status', 'payment_method']
 
     def clean_total_price(self):
         total_price = self.cleaned_data.get('total_price')

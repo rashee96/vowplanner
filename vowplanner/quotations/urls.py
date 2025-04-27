@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:quotation_id>/submit_payment/', views.submit_payment,
          name='submit_payment'),
     path('<int:quotation_id>/mark_as_paid/', views.mark_as_paid, name='mark_as_paid'),
+    path('<int:quotation_id>/edit/', views.edit_quotation, name='edit_quotation'),
 ]

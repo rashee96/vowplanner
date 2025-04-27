@@ -11,12 +11,11 @@ from events.models import VendorEvent
 @login_required
 def create_quotation(request, event_id):
     event = get_object_or_404(VendorEvent, id=event_id, vendor=request.user.vendor)
-
+    QuotationLineFormSet = inlineformset_factory(Quotation, QuotationLine,
+                                                 form=QuotationLineForm, extra=1, can_delete=True)
     if request.method == "POST":
         form = QuotationForm(request.POST)
-        QuotationLineFormSet = inlineformset_factory(Quotation, QuotationLine,
-                                                     form=QuotationLineForm, extra=1)
-        formset = QuotationLineFormSet(request.POST)
+        formset = QuotationLineFormSet(request.POST, prefix="form")
 
         if form.is_valid() and formset.is_valid():
             quotation = form.save(commit=False)
@@ -36,9 +35,7 @@ def create_quotation(request, event_id):
 
     else:
         form = QuotationForm()
-        QuotationLineFormSet = inlineformset_factory(Quotation, QuotationLine,
-                                                     form=QuotationLineForm, extra=1)
-        formset = QuotationLineFormSet()
+        formset = QuotationLineFormSet(prefix="form")
 
     return render(request, 'quotations/create_quotation.html',
                   {'form': form, 'formset': formset, 'event': event})
@@ -99,3 +96,32 @@ def mark_as_paid(request, quotation_id):
         quotation.save()
 
     return redirect('quotations:view_quotation', quotation_id=quotation.id)
+
+@login_required
+def edit_quotation(request, quotation_id):
+    quotation = get_object_or_404(Quotation, id=quotation_id, vendor=request.user.vendor)
+    QuotationLineFormSet = inlineformset_factory(Quotation, QuotationLine,
+                                                 form=QuotationLineForm, extra=0, can_delete=True)
+    if request.method == "POST":
+        form = QuotationForm(request.POST, instance=quotation)
+        formset = QuotationLineFormSet(request.POST, instance=quotation, prefix="form")
+
+        if not formset.is_valid():
+            print("Formset errors:", formset.errors)
+            print("Management form:", formset.management_form.cleaned_data)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect('quotations:view_quotation', quotation_id=quotation.id)
+
+    else:
+        form = QuotationForm(instance=quotation)
+        formset = QuotationLineFormSet(instance=quotation, prefix="form")
+
+    return render(request, 'quotations/create_quotation.html', {
+        'form': form,
+        'formset': formset,
+        'event': quotation.event,
+        'quotation': quotation,  # ✅ Important if you need status info etc
+    })

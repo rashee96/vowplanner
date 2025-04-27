@@ -4,7 +4,7 @@ from . import views
 app_name = 'events'
 urlpatterns = [
     path("get_all_events/", views.get_all_events, name="get_all_events"),
-    path("add_google_event/", views.add_google_calendar_event, name="add_google_calendar_event"),
+    path("create_event/", views.create_event, name="create_event"),
     path("delete_google_event/", views.delete_google_calendar_event,
          name="delete_google_calendar_event"),
     path("clear_google_credentials/", views.clear_google_credentials,

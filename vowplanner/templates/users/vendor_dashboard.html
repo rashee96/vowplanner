@@ -241,20 +241,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Reauthorize Google Button -->
-            <div class="mt-3 text-center">
-                <p>Google Calendar:
-                    {% if request.user.google_authorized %}
-                        ✅ Authorized
-                        <a href="{% url 'events:google_auth' %}" class="btn btn-warning">Reauthorize</a>
-                    {% else %}
-                        ❌ Not Authorized
-                        <a href="{% url 'events:google_auth' %}" class="btn btn-primary">Authorize
-                            Google</a>
-                    {% endif %}
-                </p>
-            </div>
         </div>
 
     </div>

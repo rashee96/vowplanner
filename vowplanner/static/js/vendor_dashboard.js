@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", function () {
             vendor_package: vendorPackage
         };
 
-        fetch("/events/add_google_event/", {
+        fetch("/events/create_event/", {
             method: "POST",
             headers: {
                 "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),

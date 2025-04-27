@@ -6,6 +6,7 @@
         <div class="text-end">
             {% if request.user == quotation.vendor.user %}
                 {% if quotation.status == "draft" %}
+                    <a href="{% url 'quotations:edit_quotation' quotation.id %}" class="btn btn-primary">Edit</a>
                     <a href="{% url 'quotations:confirm_quotation' quotation.id %}"
                        class="btn btn-warning">Confirm</a>
                 {% endif %}
