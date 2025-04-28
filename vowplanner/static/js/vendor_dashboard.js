@@ -20,11 +20,11 @@ function archivePackage(packageId) {
         return;
     }
 
-    fetch(`/packages/vendor/package/archive/${packageId}/`, {
+    fetch(`/packages/archive/${packageId}/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
+            "X-CSRFToken": getCSRFToken()
         },
         body: JSON.stringify({reason: reason})
     })
